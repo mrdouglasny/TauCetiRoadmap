@@ -31,11 +31,13 @@ variable {X : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X] [CompleteSpace X
 --     (l • 1 − S.generator) ∘L S.resolvent l = 1
 -- theorem resolvent_norm_le (S : ContractionC0Semigroup X) {l : ℝ} (hl : 0 < l) :
 --     ‖S.resolvent l‖ ≤ 1 / l
+--   (possible further extension: characterize R λ as the *two-sided* inverse (λ − A)⁻¹
+--    on D(A) — the v1 target above is the right-inverse + bound that `resolventRightInv` proves.)
 
 -- 2. Hille–Yosida generation (converse / Lumer–Phillips): densely-defined dissipative +
 --    a range condition ⇒ generates a contraction C₀-semigroup.
 -- theorem generates_of_dissipative (A : DenseLinearOperator X)
---     (hd : A.IsDissipative) (hr : ∀ l > 0, Surjective (l • 1 − A)) :
+--     (hd : A.IsDissipative) (hr : ∃ l₀ > 0, Surjective (l₀ • 1 − A)) :   -- one λ₀ suffices (Lumer–Phillips)
 --     ∃ S : ContractionC0Semigroup X, S.generator = A
 
 -- 3a. Bernstein: a completely monotone function on [0,∞) is the Laplace transform of a
@@ -127,9 +129,15 @@ strong continuity, the semigroup laws. *(Migrate `StronglyContinuousSemigroup.le
 (`‖R(λ)‖ ≤ 1/λ`). Cleanly Mathlib-only; the migrated module already compiles on v4.31.
 
 ### Layer 2: generation theorem / Lumer–Phillips converse
-Densely-defined dissipative + range condition ⇒ generates a contraction semigroup. ⚠ Mostly
-**build-here**: the source has the `IsDissipative` scaffold (`Future/GenerationTheorem.lean`)
-but not the full converse; this is the genuinely open item.
+Densely-defined dissipative + a range condition (`∃ λ₀ > 0` with `λ₀ − A` surjective) ⇒
+generates a contraction semigroup. ⚠ **Build-here** (the genuinely open item).
+**Discharge plan — Yosida approximation.** Set `Aλ = λ² R(λ,A) − λI` (bounded, by Layer 1);
+show each `Aλ` generates a contraction semigroup `e^{tAλ}` and that `e^{tAλ} x` converges
+(uniformly on compacts) to a limit `S(t)x`, with generator `A`. Sub-lemmas: (a) generator-domain
+**density** (`domain_isDense`); (b) the **approximation estimates** + convergence of the
+exponentials. `Future/GenerationTheorem.lean` already carries `DenseLinearOperator`,
+`IsDissipative`, and the target statement (as a commented spec, with `∃ λ₀`); only the proof is
+missing. Refs: Engel–Nagel II.3.5–3.8; Pazy Ch. 1.
 
 ### Layer 3: Bernstein's theorem
 Completely monotone ⇒ Laplace transform of a unique finite measure. *(Migrate the Bernstein
@@ -137,9 +145,23 @@ chain.)* Mathlib-only; the measure extraction uses Prokhorov tightness.
 
 ### Layer 4: BCR Bochner (d = 0, then general)
 Semigroup/Laplace positive-definite representation. **Uniqueness** (`laplaceFourier_unique`)
-is Mathlib-only and portable now; **existence** (`semigroupGroupBochner`) ⚠ depends on the
-spatial Bochner theorem — defer until there is a Mathlib-only route to it (or until a Bochner
-theorem for positive-definite functions on `ℝᵈ` is itself a TauCeti target).
+is Mathlib-only and portable now. **Existence** (`semigroupGroupBochner`) ⚠ consumes the
+*spatial* Bochner theorem on `ℝᵈ` (continuous positive-definite ⇒ Fourier transform of a finite
+measure), so it is gated on **Layer 4a** below.
+
+### Layer 4a (prerequisite): Bochner's theorem on ℝᵈ — its own target
+**Verified absent from Mathlib (v4.31):** "Bochner" in Mathlib is the Bochner *integral*, and
+the positive-definite theory is only for *matrices*/quadratic forms — there is **no**
+continuous-positive-definite-*function* notion or Bochner representation. So formalize it as a
+standalone target (which Layer 4 then consumes). The ingredients **are** present:
+`charFun` (`MeasureTheory/Measure/CharacteristicFunction`), **Lévy continuity**
+(`Probability/CentralLimitTheorem`), **Prokhorov** (`MeasureTheory/Measure/Prokhorov`),
+**Riesz–Markov–Kakutani** (`MeasureTheory/Integral/RieszMarkovKakutani`), and Fourier
+inversion/Plancherel (`Analysis/Fourier/*`). Route: define continuous PD functions, then either
+(i) the positive linear functional `f ↦ ∫ f̂ · φ` + Riesz–Markov, or (ii) `charFun` + tightness
+via Lévy/Prokhorov. ⚠ pitfalls: Mathlib's `2π` Fourier convention (`e^{-2πi⟨·,·⟩}`, unitary
+without prefactors); and the PD-function notion itself is new. *(Researched + cross-checked
+against the Mathlib source, 2026-06-18.)*
 
 ## Worked examples (acceptance criteria, keeping the statements honest)
 
@@ -157,8 +179,9 @@ theorem for positive-definite functions on `ℝᵈ` is itself a TauCeti target).
 Layers 0–1 first: the C₀ API and the Hille–Yosida resolvent are direct migrations that
 compile on v4.31 and validate the pipeline (Layer 1 is the suggested first PR). Layer 3
 (Bernstein) is an independent Mathlib-only migration that can proceed in parallel. Layer 2
-(generation theorem) is the open mathematical item. Layer 4 (BCR) is last: its uniqueness is
-portable now, its existence waits on a Mathlib-only spatial Bochner theorem.
+(generation theorem) is the open mathematical item (discharge via Yosida approximation). Layer 4
+(BCR) is last: uniqueness is portable now; existence waits on **Layer 4a**, the spatial Bochner
+theorem on ℝᵈ — absent from Mathlib, so a standalone prerequisite target.
 
 ## References
 
