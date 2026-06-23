@@ -18,8 +18,8 @@ This area builds that **L² Hilbert-basis layer** for orthogonal systems:
 
 The **Hermite basis of `L²(ℝ)`** is the worked anchor (**Part A**, the v1 deliverable) from which the
 family-agnostic spine (**Part B**) is abstracted. The spine is then **exercised by a second family —
-the Chebyshev basis of `L²([-1,1])`** (**Part C**), which uses the other completeness route
-(Weierstrass density, not Fourier) and whose orthogonality relation is already in Mathlib; and it
+the Chebyshev basis of `L²([-1,1])`** (**Part C**), whose orthogonality relation is already in
+Mathlib and which tests the bridge on a compact weighted measure (not the Gaussian); and it
 yields the **multidimensional Hermite basis** (**Part D**, future). Laguerre and Jacobi are a
 *separate* future roadmap — Mathlib has neither family, so grounding them means defining the
 polynomials first.
@@ -54,11 +54,10 @@ L²") is this area's contribution.
   **arguments** — family-agnostic and grounded by construction. The Hermite instance supplies that
   relation from **A1** (a target here); each family's polynomial identities are reused from
   Mathlib where present, and otherwise are targets (Hermite's are A1).
-- **Weights are classical, with a stated completeness route.** Gaussian `e^{-x²}` (Hermite,
-  Route 1 — moment determinacy) and the Chebyshev weight `(√(1-x²))⁻¹` on `[-1,1]` (Chebyshev,
-  Route 2 — Weierstrass). The completeness hypothesis is explicit in the general lemma: finite
-  exponential moments (Gaussian-type decay) for the unbounded case, or compact support for the
-  Weierstrass case. (Laguerre `x^α e^{-x}` / Jacobi `(1-x)^α(1+x)^β` are a separate roadmap.)
+- **Weights are classical; one completeness mechanism.** Gaussian `e^{-x²}` (Hermite) and the
+  Chebyshev weight `(√(1-x²))⁻¹` on `[-1,1]` both complete via B1's moment determinacy — its
+  hypothesis (finite exponential moments) holds for Gaussian decay *and* automatically for compact
+  support. (Laguerre `x^α e^{-x}` / Jacobi `(1-x)^α(1+x)^β` are a separate roadmap.)
 - **Measures named explicitly.** `volume` on `ℝ`/intervals, `Measure.pi`/`Measure.prod` for
   products — never inferred — so the product-basis lemma and the multi-d instances are extensions,
   not refactors.
@@ -76,8 +75,6 @@ L²") is this area's contribution.
   `integral_eval_T_real_mul_self_measureT_zero` (`= π`),
   `integral_T_real_mul_self_measureT_of_ne_zero` (`= π/2`), and `T_real_cos`
   (`(T ℝ n).eval (cos θ) = cos (n θ)`).
-- **Stone–Weierstrass** `polynomialFunctions_closure_eq_top` — polynomials dense in `C([a,b])`, the
-  compact-interval completeness route (B1 Route 2).
 - Hilbert-basis API: `HilbertBasis`, `HilbertBasis.mkOfOrthogonalEqBot`,
   `HilbertBasis.hasSum_inner_mul_inner`, `HilbertBasis.tsum_inner_mul_inner`; `Orthonormal`; `MemLp.toLp`.
 - `OrthonormalBasis.tensorProduct` — **finite-dimensional only** (the algebraic tensor of finite
@@ -135,6 +132,16 @@ analytic facts (A2–A3) live under `Analysis/SpecialFunctions/…`. Names descr
   exponential moment finite* (`∫ e^{a|x|}|f|e^{-x²/2} ≤ ‖f‖₂·‖e^{a|x|}e^{-x²/2}‖₂ < ∞`, Cauchy–Schwarz),
   so `𝓕 g` (`Fourier.fourierIntegral`) is entire with all Taylor coefficients (= the moments) zero,
   hence `g = 0`. *Stay in the `fourierIntegral` API — do not detour through a finite-signed-measure API.*
+  The `𝕜 = ℂ` case reduces to this real one: each `ψₙ` is real, so `f ∈ L²(ℝ;ℂ)` orthogonal to every
+  `ψₙ` forces `Re f` and `Im f` each orthogonal to every `ψₙ`, hence both vanish — the step that
+  makes "`ℝ` and `ℂ` are one theorem" literally true.
+- **Fourier eigenfunction** (a target; the key structural fact about this basis after
+  orthonormality/completeness, and not in Mathlib): the Hermite functions diagonalize the Fourier
+  transform, `𝓕 ψₙ = (-i)ⁿ ψₙ`. **Pin the convention:** `(-i)ⁿ` is the eigenvalue for the *unitary
+  angular-frequency* transform; under Mathlib's `Fourier.fourierIntegral` (the `e^{-2πixξ}`
+  convention A3's completeness already uses), `e^{-x²/2}` is **not** self-dual (the self-dual scale
+  is `e^{-πx²}`), so state the eigen-relation for the `2π`-scaled functions or carry the dilation.
+  The `fourierIntegral` machinery is already imported here.
 - **Headline milestone** (for every `[RCLike 𝕜]`):
   `hermiteHilbertBasis 𝕜 : HilbertBasis ℕ 𝕜 (Lp 𝕜 2 volume)` (via `mkOfOrthogonalEqBot`), with
   Parseval in `tsum_inner_mul_inner` orientation `∑' n, ⟪f,ψₙ⟫·⟪ψₙ,g⟫ = ⟪f,g⟫`. `𝕜=ℝ` and `𝕜=ℂ`
@@ -149,11 +156,10 @@ analytic facts (A2–A3) live under `Analysis/SpecialFunctions/…`. Names descr
 The three pieces that Part A's completeness/basis argument factors into, stated without reference to
 any particular family.
 
-### B1 — Completeness toolkit (two grounded routes)
-*A polynomial-dense weighted system is complete in its L² space. Two grounded routes, used by the
-two families below.*
+### B1 — Completeness toolkit (moment determinacy)
+*A polynomial-dense weighted system is complete in its L² space. One lemma covers both families
+below — the Gaussian (unbounded support) and the Chebyshev (compact support) cases.*
 
-**Route 1 — moment determinacy (unbounded support, e.g. Hermite).**
 An `L¹` function `g` *all of whose exponential moments are finite* (`∫ e^{a|x|}·|g| < ∞` for every
 `a ≥ 0` — and a single positive `a`, giving strip-analyticity, already suffices for uniqueness) and
 all of whose polynomial moments vanish is a.e. `0` — because that integrability makes `𝓕 g`
@@ -168,12 +174,12 @@ basis is in **`L²(dx)` with the `√w` envelope** — `g ∈ L²(dx)` orthogona
 — reduced to the moment lemma via `h := g·√w`. Do *not* conflate it with `L²(w)`-orthogonality (test
 integrand `w`, not `√w`); they correspond under `g ↔ g·√w` but are distinct statements.
 
-**Route 2 — Weierstrass density (compact support, e.g. Chebyshev).**
-For a weight supported on a compact interval `[a,b]`, completeness is the density of polynomials in
-`C([a,b])` (Stone–Weierstrass, `polynomialFunctions_closure_eq_top`) pushed into `L²`: a
-square-integrable `g` orthogonal to every `pₙ` (against the weighted measure) vanishes a.e. This is
-a **different mechanism** than Route 1 — included so the spine is exercised across both, and so the
-compact families (Part C) are grounded without the moment-determinacy machinery.
+**Compact support (e.g. Chebyshev) uses the *same* lemma — no separate route.**
+A compactly-supported `g` has *all* exponential moments finite automatically (`∫ e^{a|x|}|g| < ∞`
+over a bounded interval), so the entire-`𝓕` / vanishing-moments argument above applies unchanged.
+Chebyshev (Part C) therefore consumes B1 directly; it exercises the spine through B2's
+**σ-finite-`μ` genericity** (a compact weighted measure, not the Gaussian) rather than through a
+second completeness mechanism. (So no Stone–Weierstrass route is needed.)
 
 ### B2 — Orthogonality relation → `HilbertBasis`
 Given polynomials `p : ℕ → ℝ[X]`, a weight `w` with `0 ≤ w` **and `0 < w` a.e.** (else `g·√w = 0`
@@ -189,13 +195,20 @@ change of variables when the family is defined on a rescaled argument:** the Her
 relation transported by `u = x√2` — *not* `w = e^{-x²/2}` read off A1 directly.
 
 ### B3 — L²-product basis
+**The load-bearing milestone is completeness, not orthonormality.** Orthonormality of the products
+`ψᵢ(x)·φⱼ(y)` is the easy Fubini half; the real theorem is that the algebraic tensor
+`L²(μ) ⊗ L²(ν)` is **dense** in `L²(μ ⊗ ν)` (equivalently, the products are a *complete* orthonormal
+system), which needs `μ, ν` **σ-finite** — state `[SigmaFinite μ] [SigmaFinite ν]` explicitly.
+Mathlib's `OrthonormalBasis.tensorProduct` is the abstract tensor with *finite-index* hypotheses
+(`[Fintype ι₁] [Fintype ι₂]`), so it does **not** give the concrete `L²(μ.prod ν)` statement — this
+density result is the gap B3 fills, and the milestone must read as that, not as cheaper.
+
 **Index-generic** (this resolves the `ℕ`-vs-product question): for Hilbert bases of `L²(μ)` and
 `L²(ν)` indexed by *arbitrary* types `ι₁, ι₂`, B3 produces a Hilbert basis of `L²(μ ⊗ ν)` indexed
 by `ι₁ × ι₂`; iterated over a finite family, a basis of `L²(Measure.pi μ)` indexed by `Π i, κ i`.
 The family bridges (B2) are indexed by `ℕ` (degree), and B3 **consumes** those as the `ι = ℕ` case —
 so the multidimensional basis is indexed by `Π i, ℕ` (multi-indices), and **B2 need not be
-generalized away from `ℕ`**: the lift to products lives entirely in B3. (Mathlib has only the
-finite-dim algebraic `OrthonormalBasis.tensorProduct`.) Not special-function-specific.
+generalized away from `ℕ`**: the lift to products lives entirely in B3. Not special-function-specific.
 
 **Acceptance.** B1 applied to the envelope `√w = e^{-x²/2}` (i.e. `g = f·e^{-x²/2}`, `f ∈ L²`); B2
 reproducing Part A's basis from the orthogonality relation; B3 giving an ON basis of
@@ -203,10 +216,11 @@ reproducing Part A's basis from the orthogonality relation; B3 giving an ON basi
 
 ## Part C — A second family: the Chebyshev basis of `L²([-1,1])`
 
-A second instantiation, so the abstract spine (B1–B3) is **exercised by more than one family** and
-across **both completeness routes** — the point of building the spine at all. The **orthogonality
-relation is an existing Mathlib input**; the basis assembly + completeness are the targets (named
-below).
+A second instantiation, so the abstract spine (B1–B3) is **exercised by more than one family** —
+the point of building the spine at all. The **orthogonality relation is an existing Mathlib input**;
+the basis assembly + completeness are the targets (named below). Chebyshev differs from Hermite not
+in the completeness *mechanism* (it reuses B1) but in **B2's measure** — a compact weighted measure
+rather than the Gaussian — so it tests the σ-finite-`μ` genericity of the bridge.
 
 - **Inputs (existing Mathlib).** The polynomials `Polynomial.Chebyshev.T` (`ℤ`-indexed; the basis
   uses `n : ℕ`), orthogonal w.r.t. the Chebyshev measure
@@ -215,17 +229,15 @@ below).
   `integral_eval_T_real_mul_self_measureT_zero` (`= π`), and `integral_T_real_mul_self_measureT_of_ne_zero`
   (`= π/2`). (`integral_eval_T_real_mul_eval_T_real_measureT` is the product-to-sum identity, not the
   vanishing.) Also `T_real_cos` (`(T ℝ n).eval (cos θ) = cos (n θ)`).
-- **Completeness via B1 Route 2** (Weierstrass density), the compact-interval mechanism — *not* the
-  Fourier/moment route, which is exactly why a second family is worth including.
+- **Completeness reuses B1** (no new route): `measureT` is compactly supported, so a `g ∈ L²(measureT)`
+  orthogonal to every `Tₙ` yields a compactly-supported `L¹` function with all exponential moments
+  finite and all polynomial moments zero — exactly B1's hypothesis — hence `g = 0`.
 - **Milestone:** `chebyshevHilbertBasis 𝕜 : HilbertBasis ℕ 𝕜 (Lp 𝕜 2 measureT)` (roadmap target) —
   the normalized `Tₙ/√cₙ` (`c₀ = π`, `cₙ = π/2`), assembled by **B2** from the Mathlib orthogonality
-  + Route-2 completeness: the bridge demonstrated on a non-Hermite family.
-- **Open targets this entails** (so "grounded" is honest, not hand-waved): `IsFiniteMeasure measureT`
-  (derivable, currently no instance); the support/subtype bridge between `measureT` on `ℝ↾Ioc(-1,1)`
-  and Weierstrass density on the compact subtype `Icc (-1) 1`; the `C(Icc) ↪ L²` density push
-  (`ContinuousMap.toLp_denseRange`, needs `IsFiniteMeasure` + `WeaklyRegular`); the
-  Chebyshev-span-to-polynomials step (`Polynomial.Sequence.span_degreeLT` via `chebyshevTsequence`);
-  and the real→`[RCLike 𝕜]` extension of the real-valued Weierstrass density.
+  + B1 completeness: the bridge demonstrated on a non-Gaussian measure.
+- **Open targets this entails** (so "grounded" is honest): `IsFiniteMeasure measureT` (derivable,
+  currently no instance); the compactly-supported instance of B1's moment lemma; and the
+  real→`[RCLike 𝕜]` cast of the completeness.
 - *Acceptance:* `⟨T₀,T₀⟩ = π`, `⟨T₁,T₁⟩ = π/2`, `⟨T₀,T₁⟩ = 0`; and (a *target*, via
   `integral_measureT_eq_integral_cos` + a unitary-transfer statement, not from `T_real_cos` alone)
   `chebyshevHilbertBasis` corresponds to the cosine basis under `x = cos θ`.
