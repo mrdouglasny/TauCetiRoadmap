@@ -7,8 +7,7 @@ because these are goals, not proofs). The AI-authored mathematics that discharge
 in the code repo; review machinery lives in
 [TauCetiReview](https://github.com/FormalFrontier/TauCetiReview).
 
-Tau Ceti is being incubated jointly by the [Lean FRO](https://lean-lang.org/fro/) and the
-[Mathlib Initiative](https://mathlib-initiative.org/), in partnership with academic and
+Tau Ceti is being incubated by the [Lean FRO](https://lean-lang.org/fro/) in partnership with academic and
 industry groups.
 
 ## Roadmaps
@@ -25,6 +24,7 @@ industry groups.
 10. [One-parameter semigroups, completely monotone functions, and BCR Bochner](TauCetiRoadmap/OneParameterSemigroups/README.md)
 11. [Exchangeability and de Finetti](TauCetiRoadmap/Exchangeability/README.md)
 12. [Conformal mapping and the geometric theory of holomorphic functions](TauCetiRoadmap/ConformalMapping/README.md)
+13. [Weighted orthogonal L² bases: completeness, Hilbert bases, and products of orthogonal systems](TauCetiRoadmap/OrthogonalL2Bases/README.md)
 
 ## Writing a roadmap
 
@@ -49,7 +49,9 @@ reviewers, can act on it without guessing.
   result that needs an explicit bound carries `∀ x ∈ s, ‖f x‖ ≤ C` directly in its hypotheses (as
   in `norm_cfc_le`), and uses `Bornology.IsBounded` when no constant is needed
   (`isBounded_iff_forall_norm_le'` relates the two). We do the same, and never wrap a one-line
-  bound in a new predicate.
+  bound in a new predicate. When Mathlib's name for something is itself a Mathlib-ism that a
+  mathematician would not recognize (`ModularFormClass`, say), link the Mathlib declaration the
+  first time you use it, so a reader can see what the term denotes rather than guess.
 
 - **Specify the mathematics, not your existing code.** Say what each milestone should prove,
   intrinsically, so a reviewer can judge it on its own terms. If you're porting existing work,
