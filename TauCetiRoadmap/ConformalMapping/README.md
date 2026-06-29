@@ -137,8 +137,9 @@ deliberately scoped to the conformal-mapping spine that none of them build:
 
 - **Below — `ContourIntegration` (PR #35).** Provides residues, winding numbers, the
   argument principle, and the global Cauchy theorem (Dixon). **L0 consumes it.**
-- **Above — `ModularForms` (PR #36).** A 13-layer entry targeting modular curves as moduli
-  with `Y(Γ)(ℂ) ≅ Γ\ℍ`. The **modular & elliptic uniformization** — including the
+- **Above — `ModularForms` (PR #47).** A 13-layer entry targeting the complex modular curves
+  `Y(Γ)(ℂ) ≅ Γ\ℍ` (the complex-analytic versions, not the moduli-space framing). The
+  **modular & elliptic uniformization** — including the
   `ℍ/Γ(2) ≅ ℂ∖{0,1}` `λ`-covering, the
   `j`-invariant, and Picard's theorem — belongs there; it **consumes our L4 (reflection) +
   L5 (boundary correspondence)** together with `UniversalCovers` (deck group). We do **not**
@@ -149,7 +150,7 @@ deliberately scoped to the conformal-mapping spine that none of them build:
 
 So the unique content of this entry — **Montel/normal families, the Riemann mapping theorem,
 Schwarz–Pick, reflection, Carathéodory** — is exactly the conformal spine missing between the
-residue engine (#35) and the modular/geometric consumers (#36, HeegaardFloer, UniversalCovers).
+residue engine (#35) and the modular/geometric consumers (#47, HeegaardFloer, UniversalCovers).
 
 ## Coordination with upstream Mathlib (RMT is being formalized at Mathlib)
 
