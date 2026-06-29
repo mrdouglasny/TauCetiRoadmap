@@ -14,13 +14,22 @@ This area builds that **L² Hilbert-basis layer** for orthogonal systems:
 - a **completeness** toolkit (moment determinacy / Fourier uniqueness) — the step that upgrades
   "orthogonal" to "complete orthonormal basis";
 - the **orthogonality-relation → `HilbertBasis`** bridge (the √w normalization + Parseval);
+- the **weight↔measure isometry** `L²(w·μ) ≃ₗᵢ L²(μ)` (multiplication by `√w`), so each family's
+  basis is available in **both normalizations** — the bare polynomials as an ONB of the weighted
+  measure `L²(w·μ)`, and their `√w`-envelope functions as an ONB of `L²(μ)` — from one construction;
 - the **L²-product-basis** lemma (a Hilbert basis of `L²(μ ⊗ ν)` from bases of the factors).
+
+Which normalization a consumer wants depends on the space they work over — a weighted / probability
+`L²` (orthogonal-polynomial and polynomial-chaos expansions, moment and spectral problems) or
+`L²(dx)` (eigenfunction expansions: the Hermite functions and QHO eigenstates, Sturm–Liouville / PDE,
+signal processing). The two are isometric but are different `HilbertBasis` objects on different
+spaces, so the area provides **both**, related by the isometry, rather than privileging one.
 
 The **Hermite basis of `L²(ℝ)`** is the worked anchor (**Part A**, the v1 deliverable) from which the
 family-agnostic spine (**Part B**) is abstracted. The spine is then **exercised by a second family —
 the Chebyshev basis of `L²([-1,1])`** (**Part C**), whose orthogonality relation is already in
 Mathlib and which tests the bridge on a compact weighted measure (not the Gaussian); and it
-yields the **multidimensional Hermite basis** (**Part D**, future). Laguerre and Jacobi are a
+yields the **multidimensional Hermite basis** (**Part D**, a later milestone here). Laguerre and Jacobi are a
 *separate* future roadmap — Mathlib has neither family, so grounding them means defining the
 polynomials first.
 
@@ -49,6 +58,12 @@ L²") is this area's contribution.
 - **The basis layer is family-agnostic and scalar-generic.** Bases are stated through the
   measure-generic `HilbertBasis ι 𝕜 (Lp 𝕜 2 μ)` API over `[RCLike 𝕜]` (the real pointwise
   functions cast via `algebraMap ℝ 𝕜`); do **not** duplicate the API for `ℝ` and `ℂ` separately.
+- **Pin the domain.** The polynomial bridge (B2) and the Hermite/Chebyshev instances fix the
+  reference measure to **`μ : Measure ℝ`** — the bridge evaluates `Polynomial.eval` (needs `ℝ`), and
+  `ℝ` is where the compact-support and interval families (and the Laguerre/Jacobi-on-subsets follow-on)
+  live. The `weightL2Isometry` primitive itself is **not** specialized — it is measure-theoretic and
+  stated over an arbitrary measurable space; only the polynomial-facing layers are `ℝ`. Product/`pi`
+  bases (B3) are over generic measurable factors.
 - **Every basis milestone exports its element-level `coe_*`, not just the bundled term.** A
   `HilbertBasis` shipped only as a bundled term — without `⇑basis = explicit family` — is
   near-vacuous: bare existence of an `ℕ`- (resp. `ι×κ`-) indexed Hilbert basis is just a
@@ -88,10 +103,14 @@ L²") is this area's contribution.
 - `OrthonormalBasis.tensorProduct` — **finite-dimensional only** (the algebraic tensor of finite
   bases); there is no completed / `L²(Measure.pi)` product-basis API.
 - `integral_gaussian`; the Fourier-transform API (`Fourier.fourierIntegral`) for the determinacy proof.
+- `ProbabilityTheory.gaussianReal` (+ `gaussianReal_of_var_ne_zero`,
+  `integral_withDensity_eq_integral_smul`) for the measure-side basis (A3′). **Gaps the isometry
+  enhancement fills:** there is no transport of a `HilbertBasis` along a `≃ₗᵢ` (only `ofRepr`), and no
+  `L²(withDensity w) ≃ₗᵢ L²(μ)` change-of-measure isometry.
 
 ## What is missing (build here)
 
-The completeness toolkit (both routes), the relation→`HilbertBasis` bridge, and the L²-product-basis
+The completeness toolkit (the moment-determinacy mechanism), the relation→`HilbertBasis` bridge, and the L²-product-basis
 lemma; plus their instances: the Hermite basis (Part A) and the Chebyshev basis (Part C), and the
 multidimensional Hermite basis (Part D). (Laguerre/Jacobi are a separate future roadmap.)
 
@@ -114,8 +133,12 @@ analytic facts (A2–A3) live under `Analysis/SpecialFunctions/…`. Names descr
   `Integrable (fun x => aeval x p * Real.exp (-(x²/2)))`.
 - The one-step weighted-pairing recursion `∫ p·H_{n+1}·w = ∫ p'·Hₙ·w` (one IBP via Rodrigues
   `(Hₙ·w)' = -(H_{n+1}·w)`); and the **generating function** `∑' n, Hₙ(x)·tⁿ/n! = e^{x·t - t²/2}`.
-- **Milestone** `integral_hermite_mul_hermite_mul_gaussian`:
+- **Milestone (Lebesgue form)** `integral_hermite_mul_hermite_mul_gaussian`:
   `∫ x, Hₘ(x)·Hₙ(x)·e^{-x²/2} = if m = n then n!·√(2π) else 0`.
+- **Milestone (Gaussian-measure form)** `integral_hermite_mul_hermite_gaussianReal`:
+  `∫ x, Hₘ(x)·Hₙ(x) ∂(gaussianReal 0 1) = if m = n then n! else 0` — the Lebesgue form above divided by
+  the `√(2π)` density (`integral_withDensity_eq_integral_smul`); the form the measure-side basis (A3,
+  below) consumes directly.
 - *Acceptance:* `H₀=1, H₁=X, H₂=X²-1`; `⟨H₀,H₀⟩=⟨H₁,H₁⟩=√(2π)`; `⟨H₀,H₂⟩=0`; gen. fn. at `t=0` is `1`.
 
 ### A2 — The Hermite functions `ψₙ : ℝ → ℝ`
@@ -163,6 +186,31 @@ analytic facts (A2–A3) live under `Analysis/SpecialFunctions/…`. Names descr
   discharges its `coe_*` obligation against this lemma.
 - *Acceptance:* Parseval for an explicit `f`; coordinates of `ψ₀` are `Finsupp.single 0 1`;
   `‖f‖² = ∑' n, ‖⟪ψₙ,f⟫‖²`; both `ℝ` and `ℂ` instantiate.
+
+### A3′ — The Gaussian Hermite basis (measure side; the enhancement's named instance)
+The bare-polynomial ONB on the **probability measure** rather than `L²(dx)` — the ONB any `L²(N(0,1))`
+expansion is taken against.
+- **`gaussianHermiteHilbertBasis 𝕜 : HilbertBasis ℕ 𝕜 (Lp 𝕜 2 (gaussianReal 0 1))`** — the bare
+  normalized `Hₙ/√(n!)`; the immediate instance of `hilbertBasisOfWeightedMeasure` (B2) with
+  `μ = volume`, `w = gaussianPDFReal 0 1`, `cₙ = n!` (since `gaussianReal 0 1 = volume.withDensity
+  (gaussianPDF 0 1)`, `gaussianReal_of_var_ne_zero`), the orthogonality being the A1 measure form.
+- **`coe_gaussianHermiteHilbertBasis`** —
+  `⇑(gaussianHermiteHilbertBasis n) =ᵐ[N(0,1)] fun x => algebraMap ℝ 𝕜 (aeval x (hermite n)/√(n!))`.
+- **`memLp_hermite_gaussianReal (n) (v : ℝ≥0)`** — variance-general `L²` membership of `Hₙ/√(n!)`
+  under `gaussianReal 0 v` (the `Hₙ` of a centered Gaussian of any variance).
+- **Relation to the Lebesgue Hermite-function basis — note the dilation.** Applying
+  `weightL2Isometry` (multiplication by `√(gaussianPDFReal 0 1) = (2π)^{-1/4} e^{-x²/4}`) to
+  `gaussianHermiteHilbertBasis` does **not** give the A3 `hermiteHilbertBasis` *as is*: the image is
+  `x ↦ (2π)^{-1/4} Hₙ(x) e^{-x²/4} / √(n!) = 2^{-1/4} · ψₙ(x/√2)`, the **dilated** Hermite-function
+  basis, because v1's `ψₙ(x) = (n!√π)^{-1/2} Hₙ(x√2) e^{-x²/2}` is built on the rescaled argument
+  `x√2`. So the two named bases are related by `weightL2Isometry` **plus the `u = x√2` dilation**, not
+  by the isometry alone. The corresponding Lean lemma
+  `weightL2Isometry_gaussianHermiteHilbertBasis_apply` (image `= 2^{-1/4} ψₙ(·/√2)`) lands together
+  with the A2 `ψₙ` object API it references. (One could instead base the
+  weighted side on `w = e^{-x²}`, `pₙ = Hₙ(·√2)`, i.e. `N(0,½)`, to make the image exactly `ψₙ`; we
+  keep the standard `N(0,1)` normalization that consumers expect and carry the dilation explicitly.)
+- *Acceptance:* `⟨H₀,H₀⟩=⟨H₁,H₁⟩=1`, `⟨H₀,H₂⟩=0` under `N(0,1)`; and the dilation relation above
+  holds (image `= 2^{-1/4} ψₙ(·/√2)`).
 
 ## Part B — The family-agnostic spine (the reusable layer)
 
@@ -213,6 +261,28 @@ normalized family — so the Hermite (A3) and Chebyshev (Part C) instances obtai
 `coe_*` by **specialization**, not re-derivation. Free from
 `HilbertBasis.coe_mkOfOrthogonalEqBot`; required because a bundle-only bridge output is green
 but undischargeable downstream.
+
+**Both normalizations via the weight↔measure isometry (the enhancement).** Two new primitives — both
+genuine Mathlib gaps — make B2's basis available on either side without re-proof:
+- **`weightL2Isometry (μ : Measure α) (w) (hwpos) (hwm) : L²(w·μ) ≃ₗᵢ[𝕜] L²(μ)`**, multiplication by
+  `√w` (`w·μ := μ.withDensity (ENNReal.ofReal ∘ w)`); an *equivalence* exactly because `0 < w` a.e.
+  (`‖√w·f‖²_{L²(μ)} = ∫ w|f|² = ‖f‖²_{L²(w·μ)}`). The isometry is purely measure-theoretic, so stated
+  over an **arbitrary** measurable `α` (only the polynomial bridge below needs `Measure ℝ`); it ships
+  the element-level `weightL2Isometry_apply` (a.e. `= √w · f`) as its anti-vacuity pin. Both this and
+  `mapₗᵢ` are general-purpose and are flagged as **upstream-Mathlib candidates**.
+- **`HilbertBasis.mapₗᵢ (b) (e : E ≃ₗᵢ F) : HilbertBasis ι 𝕜 F`** with `@[simp] mapₗᵢ_apply`
+  (`ofRepr (e.symm.trans b.repr)`; Mathlib has `ofRepr` but no `≃ₗᵢ`-transport).
+
+So alongside the `√w`-envelope basis of `L²(μ)` above, the bridge also yields the **bare-polynomial
+basis of the weighted measure** `hilbertBasisOfWeightedMeasure : HilbertBasis ℕ 𝕜 (Lp 𝕜 2 (w·μ))` (the
+`pₙ/√cₙ`, with its own `coe_*` — orthogonal polynomials are *natively* an ONB of their weighted `L²`,
+so this needs no rescaling). The two are `mapₗᵢ`-images of each other under `weightL2Isometry` — **up
+to the rescaling-argument change of variables noted above**: for a family defined on a rescaled
+argument (Hermite's `Hₙ(x√2)`) the function-side basis carries a dilation, so the bare isometry image
+of the weighted-measure basis is the *dilated* function basis, not the un-dilated one (see A3′). A
+consumer picks the normalization their space wants. (Chebyshev, Part C, lands its basis directly on
+the weighted `measureT` this way — no dilation, since `Tₙ` is not on a rescaled argument; the Gaussian
+instance is A3′.)
 
 ### B3 — L²-product basis
 **The load-bearing milestone is completeness, not orthonormality.** Orthonormality of the products
@@ -268,13 +338,20 @@ rather than the Gaussian — so it tests the σ-finite-`μ` genericity of the br
   `integral_measureT_eq_integral_cos` + a unitary-transfer statement, not from `T_real_cos` alone)
   `chebyshevHilbertBasis` corresponds to the cosine basis under `x = cos θ`.
 
-## Part D — The multidimensional Hermite basis (future; consume B)
+## Part D — The multidimensional Hermite basis (a later milestone of this roadmap; consumes B3)
 
-*Not v1; recorded so Parts A/B are built generically enough to instantiate. Fully grounded — `B3 ∘ A`.*
+*A grounded, sequenced milestone — not "future"/optional: it consumes only B3 (which lands in this
+enhancement) and `A`/`A3′`, and its targets `piHilbertBasis` / `gaussianHermitePiBasis` are stated in
+`Targets.lean`. Sequenced after B3, but in scope here.*
 
 - **Multidimensional Hermite basis** of `L²(ℝᵈ)` — `Ψ_α(x) = ∏ᵢ ψ_{αᵢ}(xᵢ)`, `α : ι → ℕ` — the
   immediate `B3 ∘ A` instantiation: B3 over `ι` copies of the 1-D Hermite basis (A3), a
   `HilbertBasis (ι → ℕ) 𝕜 (Lp 𝕜 2 (Measure.pi (fun _ => volume)))`.
+- **Measure-side multidimensional basis** `gaussianHermitePiBasis (ι) [Fintype ι] : HilbertBasis
+  (ι → ℕ) 𝕜 (Lp 𝕜 2 (Measure.pi (fun _ => gaussianReal 0 1)))` — `Ψ_α = ∏ᵢ Hₐᵢ/√(αᵢ!)` on `L²(γ^ι)`,
+  the `B3 ∘ A3′` instantiation (with `coe_gaussianHermitePiBasis`); the standard Gaussian
+  measure-side analogue of the basis above — related to it by the **coordinatewise** `weightL2Isometry`
+  + `u = xᵢ√2` dilation (same caveat as A3′, per coordinate), not by the isometry alone.
 
 **A separate future roadmap:** Laguerre and Jacobi L² bases. Unlike Chebyshev, **Mathlib has neither
 the Laguerre nor the Jacobi polynomials**, so grounding them means defining the families first —
