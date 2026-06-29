@@ -34,13 +34,22 @@ open scoped NNReal ENNReal
 
 variable {𝕜 : Type*} [RCLike 𝕜]
 
-/-- **Weight ↔ measure isometry.** For an a.e.-positive weight `w`, multiplication by `√w` is a
-linear isometric equivalence `L²(w·μ) ≃ₗᵢ L²(μ)` (`w·μ := μ.withDensity (ofReal ∘ w)`); an
-*equivalence* precisely because `w > 0` a.e. (`hwpos` load-bearing). The single primitive converting
-weight-in-measure ↔ weight-in-function; transports any Hilbert basis across (`mapₗᵢ`). -/
-noncomputable def weightL2Isometry (μ : Measure ℝ) (w : ℝ → ℝ)
+/-- **Weight ↔ measure isometry.** For an a.e.-positive weight `w` on *any* measurable space,
+multiplication by `√w` is a linear isometric equivalence `L²(w·μ) ≃ₗᵢ L²(μ)`
+(`w·μ := μ.withDensity (ofReal ∘ w)`); an *equivalence* precisely because `w > 0` a.e. (`hwpos`
+load-bearing). Purely measure-theoretic, so stated over an arbitrary `MeasurableSpace` (only the
+polynomial bridge below needs `Measure ℝ`); a genuine Mathlib gap and an upstream candidate. The
+single primitive converting weight-in-measure ↔ weight-in-function; transports any Hilbert basis
+across (`mapₗᵢ`). -/
+noncomputable def weightL2Isometry {α : Type*} [MeasurableSpace α] (μ : Measure α) (w : α → ℝ)
     (hwpos : ∀ᵐ x ∂μ, 0 < w x) (hwm : AEMeasurable w μ) :
     Lp 𝕜 2 (μ.withDensity (fun x => ENNReal.ofReal (w x))) ≃ₗᵢ[𝕜] Lp 𝕜 2 μ := sorry
+
+/-- Element-level characterization (anti-vacuity): the isometry is multiplication by `√w`. -/
+theorem weightL2Isometry_apply {α : Type*} [MeasurableSpace α] (μ : Measure α) (w : α → ℝ)
+    (hwpos : ∀ᵐ x ∂μ, 0 < w x) (hwm : AEMeasurable w μ)
+    (f : Lp 𝕜 2 (μ.withDensity (fun x => ENNReal.ofReal (w x)))) :
+    weightL2Isometry (𝕜 := 𝕜) μ w hwpos hwm f =ᵐ[μ] fun x => Real.sqrt (w x) • f x := sorry
 
 /-- Transport a Hilbert basis along a linear isometric equivalence. Mathlib has `ofRepr` but no
 `≃ₗᵢ`-transport, so this is a needed (one-line) target. -/
@@ -93,19 +102,25 @@ noncomputable def barePolyLp {μ : Measure ℝ}
     Lp 𝕜 2 (μ.withDensity (fun x => ENNReal.ofReal (w x))) :=
   (hmem n).toLp _
 
-/-- **Orthonormality from the orthogonality relation** `∫ pₘ pₙ w ∂μ = cₙ δ`. -/
+/-- **Orthonormality from the orthogonality relation** `∫ pₘ pₙ w ∂μ = cₙ δ`. `hwm` is needed to
+rewrite the `∫ … w ∂μ` (Lebesgue-side) relation into the inner product over `μ.withDensity w`. -/
 theorem orthonormal_barePolyLp {μ : Measure ℝ}
-    (hwpos : ∀ᵐ x ∂μ, 0 < w x) (hc : ∀ n, 0 < c n)
+    (hwpos : ∀ᵐ x ∂μ, 0 < w x) (hwm : AEMeasurable w μ) (hc : ∀ n, 0 < c n)
     (horth : ∀ m n, (∫ x, (p m).eval x * (p n).eval x * w x ∂μ) = if m = n then c n else 0)
     (hmem : ∀ n, MemLp (fun x => (algebraMap ℝ 𝕜) ((p n).eval x / Real.sqrt (c n))) 2
       (μ.withDensity (fun x => ENNReal.ofReal (w x)))) :
     Orthonormal 𝕜 (barePolyLp (𝕜 := 𝕜) p w c hmem) := sorry
 
-/-- **Completeness target** — uses `hdeg` (the polynomials exhaust all degrees) + moment determinacy
-(B1). Produces the `ᗮ = ⊥` input the assembler consumes. -/
+/-- **Completeness target** — grounded in moment determinacy (B1): the load-bearing hypothesis is
+`hexp`, that the weighted measure `w·μ` has every exponential moment finite (true for Gaussian decay,
+and automatic for compact support), so polynomials are dense in `L²(w·μ)`. Degree growth (`hdeg`)
+alone does **not** give completeness for an arbitrary `μ, w` — `hexp` is what makes it grounded rather
+than a leap. Produces the `ᗮ = ⊥` input the assembler consumes. -/
 theorem barePolyLp_ortho_eq_bot {μ : Measure ℝ}
-    (hwpos : ∀ᵐ x ∂μ, 0 < w x) (hc : ∀ n, 0 < c n)
+    (hwpos : ∀ᵐ x ∂μ, 0 < w x) (hwm : AEMeasurable w μ) (hc : ∀ n, 0 < c n)
     (hdeg : ∀ n, (p n).natDegree = n)
+    (hexp : ∀ a : ℝ, 0 ≤ a →
+      Integrable (fun x : ℝ => Real.exp (a * |x|)) (μ.withDensity (fun x => ENNReal.ofReal (w x))))
     (hmem : ∀ n, MemLp (fun x => (algebraMap ℝ 𝕜) ((p n).eval x / Real.sqrt (c n))) 2
       (μ.withDensity (fun x => ENNReal.ofReal (w x)))) :
     (Submodule.span 𝕜 (Set.range (barePolyLp (𝕜 := 𝕜) p w c hmem)))ᗮ = ⊥ := sorry
@@ -115,13 +130,13 @@ weighted measure `L²(w·μ)` — the textbook statement and the consumer's obje
 parameter here: completeness `hcomplete` is the input; degree is used only to produce it, in
 `barePolyLp_ortho_eq_bot`.) -/
 noncomputable def hilbertBasisOfWeightedMeasure {μ : Measure ℝ}
-    (hwpos : ∀ᵐ x ∂μ, 0 < w x) (hc : ∀ n, 0 < c n)
+    (hwpos : ∀ᵐ x ∂μ, 0 < w x) (hwm : AEMeasurable w μ) (hc : ∀ n, 0 < c n)
     (horth : ∀ m n, (∫ x, (p m).eval x * (p n).eval x * w x ∂μ) = if m = n then c n else 0)
     (hmem : ∀ n, MemLp (fun x => (algebraMap ℝ 𝕜) ((p n).eval x / Real.sqrt (c n))) 2
       (μ.withDensity (fun x => ENNReal.ofReal (w x))))
     (hcomplete : (Submodule.span 𝕜 (Set.range (barePolyLp (𝕜 := 𝕜) p w c hmem)))ᗮ = ⊥) :
     HilbertBasis ℕ 𝕜 (Lp 𝕜 2 (μ.withDensity (fun x => ENNReal.ofReal (w x)))) :=
-  HilbertBasis.mkOfOrthogonalEqBot (orthonormal_barePolyLp p w c hwpos hc horth hmem) hcomplete
+  HilbertBasis.mkOfOrthogonalEqBot (orthonormal_barePolyLp p w c hwpos hwm hc horth hmem) hcomplete
 
 /-- **DERIVED (weight in the function).** The original Part-A headline — the `pₙ·√w`-type basis of
 `L²(μ)` — is now the `weightL2Isometry`-image of the weighted-measure basis. One line, no separate
@@ -133,7 +148,7 @@ noncomputable def hilbertBasisOfOrthogonalSystem {μ : Measure ℝ}
       (μ.withDensity (fun x => ENNReal.ofReal (w x))))
     (hcomplete : (Submodule.span 𝕜 (Set.range (barePolyLp (𝕜 := 𝕜) p w c hmem)))ᗮ = ⊥) :
     HilbertBasis ℕ 𝕜 (Lp 𝕜 2 μ) :=
-  (hilbertBasisOfWeightedMeasure p w c hwpos hc horth hmem hcomplete).mapₗᵢ
+  (hilbertBasisOfWeightedMeasure p w c hwpos hwm hc horth hmem hcomplete).mapₗᵢ
     (weightL2Isometry μ w hwpos hwm)
 
 end WeightedBridge
