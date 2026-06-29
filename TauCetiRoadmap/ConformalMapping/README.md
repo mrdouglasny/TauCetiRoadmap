@@ -137,20 +137,26 @@ deliberately scoped to the conformal-mapping spine that none of them build:
 
 - **Below — `ContourIntegration` (PR #35).** Provides residues, winding numbers, the
   argument principle, and the global Cauchy theorem (Dixon). **L0 consumes it.**
-- **Above — `ModularForms` (PR #47).** A 13-layer entry targeting the complex modular curves
-  `Y(Γ)(ℂ) ≅ Γ\ℍ` (the complex-analytic versions, not the moduli-space framing). The
-  **modular & elliptic uniformization** — including the
-  `ℍ/Γ(2) ≅ ℂ∖{0,1}` `λ`-covering, the
-  `j`-invariant, and Picard's theorem — belongs there; it **consumes our L4 (reflection) +
-  L5 (boundary correspondence)** together with `UniversalCovers` (deck group). We do **not**
-  claim the modular layer here; we supply the conformal inputs it needs.
+- **Above — the modular-`λ` uniformization (the L4/L5 consumer; currently unhomed).** The
+  **modular & elliptic uniformization** — the `ℍ/Γ(2) ≅ ℂ∖{0,1}` `λ`-covering, the `j`-invariant,
+  and Picard's theorem — is the natural consumer of our **L4 (reflection) + L5 (boundary
+  correspondence)** together with `UniversalCovers` (deck group). It is **not** part of the merged
+  `ModularForms` roadmap (**PR #47**): that entry deliberately takes the *analytic-quotient* route —
+  it builds the modular curve directly as `X(Γ) = Γ\ℍ*` and gets its valence formula from
+  `ContourIntegration`, and it does **not** consume our L4/L5 or build the `λ`-covering. So this
+  consumer currently lives in downstream work (the Seiberg–Witten modular-`λ` project) rather than in
+  a sibling roadmap; we supply the conformal inputs it will need.
+- **Sibling — `ModularForms` (PR #47).** Shares our `ContourIntegration` dependency — its valence
+  formula uses the same on-cycle generalized winding numbers — and realises the modular curve
+  analytically as `Γ\ℍ*`; but it consumes `ContourIntegration`, **not** this roadmap.
 - **Consumers — `HeegaardFloer` (merged)** uses **L4 Schwarz reflection** for its
   Cauchy–Riemann boundary conditions; **`UniversalCovers` (merged)** supplies the deck-group
   Galois correspondence the `λ`-covering pairs with L4/L5.
 
 So the unique content of this entry — **Montel/normal families, the Riemann mapping theorem,
 Schwarz–Pick, reflection, Carathéodory** — is exactly the conformal spine missing between the
-residue engine (#35) and the modular/geometric consumers (#47, HeegaardFloer, UniversalCovers).
+residue engine (#35) and its geometric consumers (HeegaardFloer, UniversalCovers, and the
+modular-`λ` uniformization).
 
 ## Coordination with upstream Mathlib (RMT is being formalized at Mathlib)
 
