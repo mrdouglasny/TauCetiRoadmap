@@ -158,7 +158,7 @@ A complete RMT proof exists upstream as [mathlib4#33505](https://github.com/lean
 (at the time of writing a **stalled draft** — last updated 2026-05, merge-conflicted), slated to
 land in `Analysis/Complex/RiemannMapping.lean` as a series of smaller, human-curated PRs. The key
 fact for scoping: **`#33505` does not reach RMT by magic — it proves the L0–L2 prerequisites
-internally**, as ad-hoc *unnamed* lemmas: an argument principle
+internally**, as private lemmas: an argument principle
 (`circleIntegral_logDeriv_eq_finsum_analyticOrderNatAdd`), Hurwitz
 (`eqOn_zero_or_forall_ne_zero_of_tendstoLocallyUniformlyOn`,
 `eqOn_const_or_injOn_of_tendstoLocallyUniformlyOn`), Montel/normal-families equicontinuity
