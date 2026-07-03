@@ -23,7 +23,7 @@ industry groups.
 8. [Effective arithmetic bounds and geometry of numbers](TauCetiRoadmap/EffectiveBounds/README.md)
 9. [Geometric topology and the Kirby-list problems](TauCetiRoadmap/GeometricTopology/README.md)
 10. [One-parameter semigroups, completely monotone functions, and BCR Bochner](TauCetiRoadmap/OneParameterSemigroups/README.md)
-11. [Graphons and dense graph limits](TauCetiRoadmap/DenseGraphLimits/README.md)
+11. [Dense graph limits and graphons](TauCetiRoadmap/DenseGraphLimits/README.md)
 
 ## Writing a roadmap
 
