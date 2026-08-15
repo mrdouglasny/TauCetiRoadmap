@@ -174,13 +174,19 @@ pinned to a fixed commit, the claim cannot rot: "these 55 statements discharge a
 The re-check is a bonus with a decay curve, not the load-bearing part, and the script is
 **deliberately not wired into required CI**.
 
-Re-verification leans on things outside this repository that will eventually give way: Mathlib and
-Tau Ceti artifact caches retaining the pinned revisions, elan still serving a pinned
-release-candidate toolchain, that toolchain still running on a future host. The expensive step is
-not elaborating the record — it is building the roughly 3,100 Tau Ceti modules it imports. The
-first attempt at this failed for exactly that reason, having fetched Tau Ceti without building it.
-As a mandatory gate this becomes a liability the first time a cache expires; on demand it merely
-stops being useful, which is the better failure.
+**It does work today, and the cost is modest.** From a cold scratch workspace — clone Tau Ceti at
+the pinned revision, fetch Mathlib's cache, build the 23 Tau Ceti modules the record imports,
+elaborate it — the full re-verification takes **289 seconds** and exits 0. That is the number with
+everything maximally favourable, so treat it as the floor rather than the estimate.
+
+The floor rises. Re-verification leans on things outside this repository that will eventually give
+way: Mathlib and Tau Ceti artifact caches retaining the pinned revisions, elan still serving a
+pinned release-candidate toolchain, that toolchain still running on a future host. The expensive
+step is never elaborating the record itself; it is materializing what the record imports. The
+first attempt failed for exactly that reason, having fetched Tau Ceti without building it — five
+minutes today becomes a from-source Mathlib build the day a cache is pruned. As a mandatory gate
+this becomes a liability the first time that happens, to no one's benefit on a roadmap nobody is
+working on; on demand it merely stops being useful, which is the better failure.
 
 The header is worth having either way. Once the rebuild is impractical, "these statements were
 discharged against Tau Ceti `bfeffdf0`, Mathlib `77cbcbc6`, toolchain `v4.34.0-rc1`" remains a
