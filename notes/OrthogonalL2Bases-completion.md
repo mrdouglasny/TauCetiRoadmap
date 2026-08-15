@@ -140,11 +140,15 @@ So, two PRs:
 
 **PR 1 — land the discharge record while the roadmap is still active.**
 `TauCetiRoadmap/OrthogonalL2Bases/Discharged.lean`, where the glob builds it, so **CI proves the
-completion claim** rather than taking my word for it. This requires a forward bump of the Tau Ceti
-pin in `lake-manifest.json`, and that is not optional: against the current pin `86cc55d9` the
-namespace move has not happened yet, while at current `main` it has. The file cannot be green at
-both. **The bump is tested: the pin moves to `bfeffdf0`, and a full `lake build` of every roadmap
-succeeds — 8791 jobs, exit 0, no new errors, with `Discharged.lean` among the modules built.**
+completion claim** rather than taking my word for it. **The bump is tested: the pin moves to
+`bfeffdf0`, and a full `lake build` of every roadmap succeeds — 8791 jobs, exit 0, no new errors,
+with `Discharged.lean` among the modules built.**
+
+*Whether that pin bump should be part of the procedure in general is genuinely open, and I am
+soliciting opinions rather than asserting an answer — see "The pin question" below.* Here it was
+forced: the pin sat at `86cc55d9`, **between** the two drift events, so the file could not be
+green against both the pin and `main`, and moving forward was the only way to have it green at
+all.
 
 **PR 2 — archive.** Move the directory to `Completed/`, with the completion note, the
 `Completed/README.md` entry, the root README move, the `TauCetiRoadmap.lean` import, and the two
@@ -155,6 +159,41 @@ This one is a spine other roadmaps cite: five relative links from `Representatio
 and `CompactGroups/README.md`, plus two prose paths in `CompactGroups/Suggested.lean`, break when
 the directory moves. They are repointed in PR 2. Worth knowing generally — archiving a *cited*
 roadmap is not a pure directory move, and more of them will be cited than `EffectiveBounds` was.
+
+### The pin question — where I would like other opinions
+
+`Discharged.lean` has to be green, and this repository pins Tau Ceti. Green against *what*?
+
+**(a) Bump the pin to current `main`, then verify.** The certificate then means "discharged in Tau
+Ceti as it stands today", which is the claim a maintainer actually wants when retiring a plan.
+Cost: every closure PR drags a dependency bump, and a bump can redden other roadmaps'
+`Suggested.lean` for reasons having nothing to do with the roadmap being closed. Here it was
+clean, but that is one data point.
+
+**(b) Verify against the existing pin.** Cheap, self-contained, no risk to anything else. But the
+certificate then means "discharged as of whenever the pin last moved", possibly weeks stale, and
+the decision is about today's library.
+
+**(c) Keep the record out of the repository entirely** — attach it to the closure PR as a review
+artifact and let it evaporate on merge. Its whole job is to inform one decision, so this has an
+honest appeal; the cost is that the evidence is not there later when someone asks why an area was
+closed.
+
+I went with (a) because this case forced it, and I do not think one forced case settles the rule.
+The cost driver is how often we want that pin moving for unrelated reasons, which others will
+judge better than I can.
+
+### Scope, and one thing deliberately left out
+
+This is a procedure for **closing a roadmap out**, not a standing obligation on active ones. The
+record is written when someone believes an area is done and needs to be green exactly once, at the
+moment of the judgment.
+
+There is an obvious cousin for active roadmaps — seed `Discharged.lean` with every target a
+`sorry`, and let each PR replace one, so the remaining-`sorry` count is the remaining-work count.
+That is a different proposal with a different cost profile, a standing maintenance obligation
+rather than a one-time certificate, and it should be argued on its own merits. Future work,
+flagged rather than smuggled in here.
 
 ### Answering the obvious objection
 
