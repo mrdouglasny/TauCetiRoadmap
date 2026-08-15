@@ -70,7 +70,8 @@ function-side `hermiteHilbertBasis` with its element-level export and Parseval, 
 eigenrelation `𝓕 ψₙ = (-i)ⁿ ψₙ` (which the README flags as a target absent from Mathlib), Part C
 Chebyshev, Part D's `hermiteFunctionPiBasis`, and the README's own *Acceptance* criteria —
 `⟨H₀,H₀⟩ = ⟨H₁,H₁⟩ = √(2π)`, `⟨H₀,H₂⟩ = 0`, the generating function at `t = 0`, `⟨T₀,T₀⟩ = π`,
-`⟨T₁,T₁⟩ = π/2`. 51 `example`s in total. No gaps.
+`⟨T₁,T₁⟩ = π/2`, and A2's own — `ψ₀ = π^{-1/4}e^{-x²/2}`, `ψ₁ = √2·x·ψ₀`, `a ψ₀ = 0`,
+`a† ψ₀ = ψ₁`. 55 `example`s in total. No gaps.
 
 Two items overshoot. The README lists the ladder operators `a`, `a†` on `𝒮(ℝ)` as a deliberate
 *downstream* target rather than one of its own; we have them, with `[a,a†] = 1`. The Fourier
@@ -127,61 +128,70 @@ succeeded, not merely that `lake env lean` exited 0. In CI this is automatic; by
 
 ## What I propose, concretely
 
-The natural reading of "archive it" is one PR that moves the directory and drops `Discharged.lean`
-in beside it. I built that, and then the drift above convinced me it is the wrong shape.
+Two PRs, and a record that pins itself.
 
-Under `Completed/`, a file is outside the `TauCetiRoadmap.*` glob and **is not built by CI** — as
-`Completed/README.md` already notes for archived `Suggested.lean` files. That is the right
-behaviour, not a defect: an archived record is meant to stay true about the moment the plan was
-retired, not to track a library that carries on moving. What it should not do is be asserted from
-a local run made days before the decision, and the drift below shows days is enough to matter.
-
-So, two PRs:
-
-**PR 1 — land the discharge record while the roadmap is still active.**
-`TauCetiRoadmap/OrthogonalL2Bases/Discharged.lean`, where the glob builds it, so **CI proves the
-completion claim** rather than taking my word for it. **The bump is tested: the pin moves to
-`bfeffdf0`, and a full `lake build` of every roadmap succeeds — 8791 jobs, exit 0, no new errors,
-with `Discharged.lean` among the modules built.**
-
-*Whether that pin bump should be part of the procedure in general is genuinely open, and I am
-soliciting opinions rather than asserting an answer — see "The pin question" below.* Here it was
-forced: the pin sat at `86cc55d9`, **between** the two drift events, so the file could not be
-green against both the pin and `main`, and moving forward was the only way to have it green at
-all.
+**PR 1 — land the discharge record while the roadmap is still under `TauCetiRoadmap/`,** where
+the `TauCetiRoadmap.*` glob builds it, so CI certifies the claim rather than a contributor's
+laptop. This carries a forward bump of the Tau Ceti pin to `bfeffdf0`; a full `lake build` of
+every roadmap passes, 8791 jobs, no new errors, with `Discharged.lean` among the modules built.
 
 **PR 2 — archive.** Move the directory to `Completed/`, with the completion note, the
 `Completed/README.md` entry, the root README move, the `TauCetiRoadmap.lean` import, and the two
-issue-template dropdown entries. Purely mechanical once PR 1 is green.
+issue-template dropdown entries. `.github/scripts/check_roadmap_areas.py` — the repository's own
+consistency check, not mine — confirms the three copies of the roadmap list stay in sync.
+
+### The pin question, and how it resolved
+
+I originally put this section up as an open question: should a closure PR bump the pin and verify
+against current `main`, verify against whatever the pin happens to be, or keep the record out of
+the repository altogether? Each had a bad edge. Bumping drags a dependency change into every
+closure PR. Not bumping certifies against a possibly weeks-stale library. Discarding the record
+loses the evidence.
+
+The resolution came from a better question: not *which moving target should the record chase*, but
+*why is it chasing one at all*. Archival material should never need updating. So the record now
+**names its own revisions** and is checked against those:
+
+```lean
+-- tauceti-discharge:v1 {"roadmap":"OrthogonalL2Bases","tauceti":"bfeffdf0...",
+--                       "mathlib":"77cbcbc6...","toolchain":"leanprover/lean4:v4.34.0-rc1"}
+```
+
+`.github/scripts/check_discharged.py` reads that header, materializes Tau Ceti at *that* revision
+with *that* toolchain in a scratch workspace, builds the modules the record imports, and
+elaborates it there — never against what the repository pins today. The archived file is
+therefore **not** in the ordinary `TauCetiRoadmap` build. A roadmap nobody is working on should
+not redden CI every time the pin moves forward, and a frozen record should not need touching
+again.
+
+This also dissolves a requirement I thought I had. I had worried the record must be re-checked
+after PR 2 as well as PR 1, since the pin could move between the two merges. With the record
+pinned to a fixed commit, the claim cannot rot: "these 55 statements discharge against Tau Ceti
+`bfeffdf0`" is as true a year later as the day it was written.
+
+### On reproducibility, honestly
+
+The re-check is a bonus with a decay curve, not the load-bearing part, and the script is
+**deliberately not wired into required CI**.
+
+Re-verification leans on things outside this repository that will eventually give way: Mathlib and
+Tau Ceti artifact caches retaining the pinned revisions, elan still serving a pinned
+release-candidate toolchain, that toolchain still running on a future host. The expensive step is
+not elaborating the record — it is building the roughly 3,100 Tau Ceti modules it imports. The
+first attempt at this failed for exactly that reason, having fetched Tau Ceti without building it.
+As a mandatory gate this becomes a liability the first time a cache expires; on demand it merely
+stops being useful, which is the better failure.
+
+The header is worth having either way. Once the rebuild is impractical, "these statements were
+discharged against Tau Ceti `bfeffdf0`, Mathlib `77cbcbc6`, toolchain `v4.34.0-rc1`" remains a
+precise, falsifiable historical claim — considerably more than "the maintainers judged this
+complete in August 2026".
 
 **One thing this move costs that `EffectiveBounds` did not.** That roadmap had no inbound links.
 This one is a spine other roadmaps cite: five relative links from `RepresentationTheory/README.md`
 and `CompactGroups/README.md`, plus two prose paths in `CompactGroups/Suggested.lean`, break when
 the directory moves. They are repointed in PR 2. Worth knowing generally — archiving a *cited*
 roadmap is not a pure directory move, and more of them will be cited than `EffectiveBounds` was.
-
-### The pin question — where I would like other opinions
-
-`Discharged.lean` has to be green, and this repository pins Tau Ceti. Green against *what*?
-
-**(a) Bump the pin to current `main`, then verify.** The certificate then means "discharged in Tau
-Ceti as it stands today", which is the claim a maintainer actually wants when retiring a plan.
-Cost: every closure PR drags a dependency bump, and a bump can redden other roadmaps'
-`Suggested.lean` for reasons having nothing to do with the roadmap being closed. Here it was
-clean, but that is one data point.
-
-**(b) Verify against the existing pin.** Cheap, self-contained, no risk to anything else. But the
-certificate then means "discharged as of whenever the pin last moved", possibly weeks stale, and
-the decision is about today's library.
-
-**(c) Keep the record out of the repository entirely** — attach it to the closure PR as a review
-artifact and let it evaporate on merge. Its whole job is to inform one decision, so this has an
-honest appeal; the cost is that the evidence is not there later when someone asks why an area was
-closed.
-
-I went with (a) because this case forced it, and I do not think one forced case settles the rule.
-The cost driver is how often we want that pin moving for unrelated reasons, which others will
-judge better than I can.
 
 ### Scope, and one thing deliberately left out
 
@@ -197,16 +207,20 @@ flagged rather than smuggled in here.
 
 ### Answering the obvious objection
 
-This couples `TauCetiRoadmap` CI to Tau Ceti renames, so bumping the pin will sometimes turn the
-roadmap build red for mechanical reasons. That cost is real. Two things make it acceptable: the
-coupling already exists — four active `Suggested.lean` files (`QuiverRepresentations`,
-`IntegralLattices`, `ContourIntegration`, `DGAInfinity`) already reference `TauCeti.` declarations,
-so this extends an accepted pattern — and the repairs are one-line and mechanical, which is
-precisely the work the project's workers are good at.
+*"This couples `TauCetiRoadmap` CI to Tau Ceti renames, so the build will go red for mechanical
+reasons."*
 
-If you would rather not take on that coupling at all, the fallback is to archive with the record
-clearly labelled a snapshot pinned to a named commit, and drop the claim that it stays true. I
-would rather have the live version, but a labelled snapshot still beats prose.
+It does, but only for the single PR that lands the record, and only while the roadmap is still
+active. That coupling already exists and is accepted: four active `Suggested.lean` files
+(`QuiverRepresentations`, `IntegralLattices`, `ContourIntegration`, `DGAInfinity`) already
+reference `TauCeti.` declarations, so a closure PR is not introducing a new kind of dependency.
+The repairs are one-line and mechanical, which is the work the project's workers are good at.
+
+On archival the coupling stops entirely. The record leaves the build and is thereafter checked, on
+demand only, against the revisions it names itself. So the permanent cost of closing a roadmap
+this way is zero: no archived file can ever redden CI, and no archived file ever needs updating.
+That is the property the pinned header buys, and it is why I abandoned an earlier draft that kept
+archived records in the build.
 
 ---
 
