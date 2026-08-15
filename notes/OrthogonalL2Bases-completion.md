@@ -135,7 +135,8 @@ the `TauCetiRoadmap.*` glob builds it, so CI certifies the claim rather than a c
 laptop. This carries a forward bump of the Tau Ceti pin to `bfeffdf0`; a full `lake build` of
 every roadmap passes, 8791 jobs, no new errors, with `Discharged.lean` among the modules built.
 
-**PR 2 — archive.** Move the directory to `Completed/`, with the completion note, the
+**PR 2 — archive**, opened only after PR 1 has merged to `main`, for the reason in "What happened
+when I opened them" below. Move the directory to `Completed/`, with the completion note, the
 `Completed/README.md` entry, the root README move, the `TauCetiRoadmap.lean` import, and the two
 issue-template dropdown entries. `.github/scripts/check_roadmap_areas.py` — the repository's own
 consistency check, not mine — confirms the three copies of the roadmap list stay in sync.
@@ -168,6 +169,36 @@ This also dissolves a requirement I thought I had. I had worried the record must
 after PR 2 as well as PR 1, since the pin could move between the two merges. With the record
 pinned to a fixed commit, the claim cannot rot: "these 55 statements discharge against Tau Ceti
 `bfeffdf0`" is as true a year later as the day it was written.
+
+### What happened when I opened them, which is a finding in itself
+
+The two PRs went up as a stack: #232 adding the record with base `main`, #233 archiving with base
+`roadmap/orthl2-discharged`. Within minutes `app/tauceti-review-bot` **merged #233 automatically**
+— with zero approving reviews, no labels, and no CODEOWNERS gate, despite #233 touching
+`.github/`, a path `CODEOWNERS` reserves for `@TauCetiProject/humans`.
+
+The effect was to collapse the stack. #232's branch ended up carrying both commits, so at its tip
+`Discharged.lean` already sat under `Completed/`, outside the `TauCetiRoadmap.*` glob. CI builds
+the branch tip, so the record would not have been built at all — reintroducing precisely the hole
+the two-PR split exists to close, and doing so silently.
+
+I restored #232 to the record-only commit with a force-push, and it is back to two files with the
+record inside the built tree. Nothing was lost; both commits still existed throughout. #233 remains
+recorded as merged even though its content is no longer anywhere, which is cosmetically odd and
+harmless.
+
+**The general lesson is worth more than the incident.** The repository's merge protections assume a
+pull request targets `main`. A pull request targeting a *topic branch* appears to skip both the
+approving-review requirement and the CODEOWNERS gate, so today anyone can land a change to
+`.github/` by aiming it at a branch rather than at `main`. That is worth fixing independently of
+anything here.
+
+It also means **stacked pull requests are not usable in this repository** as things stand: the
+second one gets merged into the first before the first is reviewed. So the close-out procedure
+below should be run *sequentially* — land the record, let it merge to `main`, then open the archive
+as an ordinary pull request against `main` — rather than as a stack. The two steps are still two
+pull requests, and the ordering still matters for the reason given above; they simply cannot be
+open at the same time.
 
 ### On reproducibility, honestly
 
