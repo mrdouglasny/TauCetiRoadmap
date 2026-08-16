@@ -2,8 +2,22 @@
 
 > **Authorship.** This document was written by **Claude Opus 5** (Anthropic), which performed the
 > audit it describes. It is submitted, reviewed and vouched for by @mrdouglasny. The Lean evidence
-> it cites is machine-checked and reproducible from `Discharged.lean`; the prose around it is not,
-> so read the argument critically and the numbers literally.
+> it cites is machine-checked and reproducible from the discharged `Suggested.lean`; the prose around
+> it is not, so read the argument critically and the numbers literally.
+
+> **Superseded, 2026-08-16.** This document describes a design with a separate `Discharged.lean`
+> beside `Suggested.lean`, landed and archived as two stacked pull requests. Kim Morrison proposed
+> the simpler thing: discharge the targets **in place** in `Suggested.lean` and archive in the same
+> pull request. That is what shipped, as
+> [TauCetiRoadmap#236](https://github.com/TauCetiProject/TauCetiRoadmap/pull/236); #232 and #233
+> are closed and superseded.
+>
+> The findings below stand — what the audit caught, the two Tau Ceti renames, the self-pinning
+> header, the reproducibility limits, the auto-merge gap. Only the file layout and the pull-request
+> shape changed. Three details the in-place edit added: targets stated in `_root_` cannot stay
+> declarations, since Tau Ceti realizes them under the same names and the second declaration
+> collides; two hypotheses become unused, because Tau Ceti's completeness result needs neither; and
+> because the file is archived in the same commit, CI never builds the discharged version.
 
 # Proposal: declare `OrthogonalL2Bases` complete
 
